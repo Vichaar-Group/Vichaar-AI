@@ -1,6 +1,6 @@
 # RAG-based-QnA
 
-## FastAPI Interview Evaluator
+## FastAPI Adaptive Interview Engine (No UI)
 
 ### 1. Build the vector DB
 
@@ -17,33 +17,44 @@ uvicorn RAG.server:app --reload
 ### 3. Endpoints
 
 - `GET /health`
-- `POST /session/new`
-- `GET /session/{session_id}/question`
-- `POST /session/{session_id}/answer`
-- `GET /session/{session_id}/summary`
+- `POST /interview/start`
+- `GET /interview/{session_id}/current`
+- `POST /interview/{session_id}/answer`
+- `GET /interview/{session_id}/report`
 
 ### 4. Example flow
 
-1. Create session:
+1. Start interview:
 ```http
-POST /session/new
-```
-Response:
-```json
+POST /interview/start
+Content-Type: application/json
+
 {
-  "session_id": "uuid",
-  "total_questions": 40
+  "num_questions": 6
 }
 ```
 
-2. Get a question:
-```http
-GET /session/{session_id}/question
+Response (includes first question):
+```json
+{
+  "session_id": "uuid",
+  "current_question": {
+    "question_id": 12,
+    "question": "What is overfitting and how can you prevent it?",
+    "generated": false,
+    "focus": "core concept"
+  },
+  "progress": {
+    "answered": 0,
+    "target": 6,
+    "remaining": 6
+  }
+}
 ```
 
-3. Submit answer:
+2. Submit answer:
 ```http
-POST /session/{session_id}/answer
+POST /interview/{session_id}/answer
 Content-Type: application/json
 
 {
@@ -52,7 +63,24 @@ Content-Type: application/json
 }
 ```
 
-Evaluation response schema:
+Response includes:
+- strict scoring (`score`, `factuality`, `context`, `originality`, `example`, `injection`)
+- strengths and improvement actions
+- adaptive `next_question` generated based on previous answer quality
+
+3. Final interview report:
+```http
+GET /interview/{session_id}/report
+```
+
+Report includes:
+- average score
+- per-dimension averages
+- what candidate did well
+- what to improve
+- actionable next steps
+
+Evaluation object schema:
 ```json
 {
   "score": 0,
@@ -61,6 +89,8 @@ Evaluation response schema:
   "originality": 0,
   "example": 0,
   "injection": true,
-  "feedback": "..."
+  "feedback": "...",
+  "strengths": ["..."],
+  "improvements": ["..."]
 }
 ```
