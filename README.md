@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # RAG-based-QnA
 
 ## FastAPI Adaptive Interview Engine (No UI)
